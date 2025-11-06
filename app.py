@@ -1,21 +1,29 @@
 from flask import Flask, request, jsonify
-from gradio_client import Client
 from flask_cors import CORS
+from gradio_client import Client
 
 app = Flask(__name__)
-CORS(app)  # Allow frontend access
+CORS(app)
 
-# Connect to your Hugging Face Space
-client = Client("Karna-AI/career_ChatBot")
+@app.route("/")
+def home():
+    return "✅ Career Chatbot Backend is running!"
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
-    data = request.get_json()
-    message = data.get("message", "")
     try:
+        data = request.get_json()
+        message = data.get("message", "").strip()
+        if not message:
+            return jsonify({"error": "Empty message"}), 400
+
+        # Fresh session per call
+        client = Client("Karna-AI/career_ChatBot")
         result = client.predict(message, api_name="/chat")
+
         return jsonify({"response": result})
     except Exception as e:
+        print("🔥 ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
